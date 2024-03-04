@@ -1,7 +1,3 @@
-// Chiyou Xiong, ECS 163 Information Interfaces, Homework 3
-// Goal is to implement transitions and animations to the various data visualizations
-
-
 // changed to fit the screen of a standard 1920x1080 monitor
 const width = 1920 * .9;
 const height = 1080 * .7; 
@@ -28,6 +24,8 @@ d3.csv("data.csv").then (rawData => {
     rawData.forEach(function(d){
         
     });
+
+
 
 
 
