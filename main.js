@@ -19,11 +19,13 @@ let teamMargin = {top: 10, right: 30, bottom: 30, left: 60},
 
 // read the raw data from csv to plot
 d3.csv("data.csv").then (rawData => {
-    console.log("rawData", rawData);
+    //console.log("rawData", rawData);
+    for (i = 0; i < 200; i++) {
+        console.log(rawData[i])
+    }
+    // rawData.forEach(function(d){
 
-    rawData.forEach(function(d){
-        
-    });
+    // });
 
 
 
