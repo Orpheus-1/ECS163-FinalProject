@@ -19,17 +19,16 @@ let teamMargin = {top: 10, right: 30, bottom: 30, left: 60},
 
 // read the raw data from csv to plot
 d3.csv("california.csv").then (rawData => {
-    //console.log("rawData", rawData);
-    for (i = 0; i < 200; i++) {
-        console.log(rawData[i])
-    }
-    // rawData.forEach(function(d){
-
-    // });
-
-
-
-
+    let yearDict = {}
+    rawData.forEach(element => {
+        if (element.FIRE_YEAR in yearDict) {
+            yearDict[element.FIRE_YEAR].push(element)
+        } else {
+            yearDict[element.FIRE_YEAR] = []
+        }
+        
+    });
+    console.log(yearDict)
 
 }).catch(function(error){
     console.log(error);
