@@ -1,5 +1,5 @@
 // Imports 
-import { codeToCountyMap } from "./codeToCountyMap";
+// import { codeToCountyMap } from "./codeToCountyMap";
 
 // changed to fit the screen of a standard 1920x1080 monitor
 const width = 1920 * .9;
@@ -11,6 +11,66 @@ let heatmapLeft = 400
 let heatmapWidth = 50 + heatmapLeft
 let heatmapHeight = 50 + heatmapTop
 
+export const codeToCountyMap = {
+    "06001": "Alameda", 
+    "06031": "Kings",
+    "06061": "Placer",
+    "06091": "Sierra",
+    "06003": "Alpine",
+    "06033": "Lake",
+    "06063": "Plumas",
+    "06093": "Siskiyou",
+    "06005": "Amador",
+    "06035": "Lassen",
+    "06065": "Riverside",
+    '06095': "Solano",	
+    "06007": "Butte",
+    "06037": "Los Angeles",
+    "06067": "Sacramento",
+    "06097": "Sonoma",
+    "06009": "Calaveras",
+    "06039": "Madera",
+    "06069": "San Benito",
+    "06099": "Stanislaus",
+    "06011": "Colusa",
+    "06041": "Marin",
+    "06071": "San Bernardino",
+    "06101": "Sutter",
+    "06013": "Contra Costa",
+    "06043": "Mariposa",
+    "06073": "San Diego",
+    "06103": "Tehama",
+	"06015": "Del Norte",
+    "06045": "Mendocino",
+    "06075": "San Francisco",	 	
+    "06105": "Trinity",
+    "06017": "El Dorado",
+    "06047": "Merced",
+    "06077": "San Joaquin",
+    "06107": "Tulare",
+    "06019": "Fresno",
+    "06049": "Modoc",
+    "06079": "San Luis Obispo",
+    "06109": "Tuolumne",
+    "06021": "Glenn",
+    "06051": "Mono",
+    "06081": "San Mateo",
+    "06111": "Ventura",
+    "06023": "Humboldt", 
+    "06053": "Monterey",
+    "06083": "Santa Barbara",
+    "06113": "Yolo",
+    "06025": "Imperial",
+    "06055": "Napa",
+    "06085": "Santa Clara",
+    "06115": "Yuba",
+    "06027": "Inyo",
+    "06057": "Nevada",
+    "06087": "Santa Cruz",
+    "06029": "Kern",
+    "06059": "Orange",
+    "06089": "Shasta", 	
+}
 
 
 // read the raw data from csv to plot
@@ -64,7 +124,27 @@ d3.csv("california.csv").then (rawData => {
 
         })
 
-    })
+        // Extract fire data
+        const fireData = rawData.filter(d => d.LATITUDE && d.LONGITUDE && d.NWCG_CAUSE_CLASSIFICATION);
+        console.log(fireData)
+
+
+        // Draw fire points on the heatmap
+        svg.selectAll("circle")
+            .data(fireData)
+            .enter()
+            .append("circle")
+            .attr("cx", d => projection([parseFloat(d.LONGITUDE), parseFloat(d.LATITUDE)])[0])
+            .attr("cy", d => projection([parseFloat(d.LONGITUDE), parseFloat(d.LATITUDE)])[1])
+            .attr("r", 1.5)
+            .attr("fill", d => {
+                if (d.NWCG_CAUSE_CLASSIFICATION === "Human") return "red";
+                else if (d.NWCG_CAUSE_CLASSIFICATION === "Natural") return "blue";
+                else return "green";
+            });
+
+        })
+
 
 
 }).catch(function(error){
