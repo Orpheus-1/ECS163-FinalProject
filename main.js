@@ -94,7 +94,7 @@ d3.csv("california.csv").then (rawData => {
 
     const myColor = d3.scaleLinear()
     .range(["white", "red"])
-    .domain([0, 100]) // Max Fire Count in dictionary
+    .domain([0, 500]) // Max Fire Count in dictionary
 
     d3.json("caliCounties.geojson").then (counties => {
         let selectedYearData = yearDict["2000"] // ToDo Adjust when using html input box selection.
@@ -110,12 +110,20 @@ d3.csv("california.csv").then (rawData => {
         let pathGen = d3.geoPath().projection(projection)
 
         let svg = d3.select("svg")
-            
+
+        // Loop Each county
         counties.features.forEach(county => {
+            let countyData = selectedYearData[county.properties.NAME]
+            if ( countyData != null) {
+                console.log(countyData.length)
+            } else 
+                console.log("no fires this year at " + county.properties.NAME)
+            console.log(county)
+
             svg.append('path')
                 .datum(county)
                 .attr("d", pathGen)
-                .attr('fill', 'none')
+                .attr('fill', countyData != null ? myColor(countyData.length) : "none")
                 .attr('stroke', 'steelblue')
                 .attr('stroke-width', '2')
 
