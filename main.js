@@ -93,7 +93,9 @@ d3.csv("california.csv").then (rawData => {
     let selectedYear = 1992
     // Append Year Selector
 
-    console.log(yearDict)
+    console.log(yearDict)    
+    
+
 
     const possibleYears = Object.keys(yearDict)
     // Append Select
@@ -124,8 +126,20 @@ d3.csv("california.csv").then (rawData => {
             maxFiresSelectedYear = Math.max(maxFiresSelectedYear, value.length)
     }
 
+    function handleZoom(e) {
+        console.log(e)
+
+    }
+
+    // Zooming
+    let zoom = d3.zoom()
+        .on('zoom', handleZoom)
+
     drawMap()
 
+    function zoomToCounty() {
+
+    }
     function drawMap() {
 
         // GET MAX FIRE Count
@@ -142,21 +156,20 @@ d3.csv("california.csv").then (rawData => {
         .domain([0, maxFiresSelectedYear]) // Max Fire Count in dictionary
     
         let svg = d3.select("svg")
+        
         d3.json("caliCounties.geojson").then (counties => {
-            let selectedYearData = yearDict[selectedYear] // ToDo Adjust when using html input box selection.
+            let selectedYearData = yearDict[selectedYear]
     
             console.log(counties)
     
             // Select Our Root coordinate to build map upon
             let county = counties.features.filter(county => county.properties.NAME === "Sacramento")[0]
-            console.log(county)
+            console.log(county)   
     
             // Handle placement of points on SVG
             let projection = d3.geoMercator().fitExtent([[heatmapLeft, heatmapTop], [heatmapWidth, heatmapHeight]], county)
             let pathGen = d3.geoPath().projection(projection)
-    
-            
-    
+
             // Loop Each county
             counties.features.forEach(county => {
                 let countyData = selectedYearData[county.properties.NAME]
@@ -169,16 +182,38 @@ d3.csv("california.csv").then (rawData => {
                     .attr('stroke-width', '2')
                 
 
-                path.on("mouseover", d => {
-                    console.log(d)
+                path.on("mouseover", (d) => {
+                    console.log(d3.event, d)
                     path.attr('stroke', 'black')
                         .attr('stroke-width', '3')
+
+                    let box = svg.append("g")
+
+                    box.append("rect")
+                    .attr("x", d3.event.x + 25)
+                    .attr("y", d3.event.y - 50 - 25)
+                    .attr("width", 250)
+                    .attr("height", 50)
+                    .style("fill", "lightgray")
+
+                    box.append("text")
+                    .attr("class", "popupText")
+                    .attr("x", d3.event.x + 50)
+                    .attr("y", d3.event.y - 50)
+                    .attr("text-align", "center")
+                    .attr("font-size", "30px")
+                    .text(d.properties.NAME)
                     
                 })
                 .on("mouseout", d => {
                     path.attr('stroke', 'steelblue')
                         .attr('stroke-width', '2')
-                });
+                    
+                    svg.selectAll(".popupText").remove()
+                    svg.selectAll("rect").remove()
+                })
+                .on("click", d => {
+                })
             });
     
         });
