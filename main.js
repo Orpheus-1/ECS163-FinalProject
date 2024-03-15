@@ -73,7 +73,8 @@ const codeToCountyMap = {
 d3.csv("california.csv")
   .then((rawData) => {
     let yearDict = {};
-    console.log(rawData);
+
+    // Parse Data into Dict of years and Separated by County Name
     rawData.forEach((element) => {
       if (element.FIRE_YEAR in yearDict) {
         let countyName = codeToCountyMap[element.FIPS_CODE];
@@ -89,12 +90,8 @@ d3.csv("california.csv")
       return;
     });
 
+    //Base Selected Year
     let selectedYear = 1992
-    // Append Year Selector
-
-    console.log(yearDict)    
-    
-
 
     const possibleYears = Object.keys(yearDict)
     // Append Select
@@ -107,7 +104,8 @@ d3.csv("california.csv")
        // svg
        d3.selectAll("path").remove()
        d3.selectAll("circle").remove()
-       //drawMap()
+
+       drawMap()
        drawFireDots()
     });
     
@@ -138,7 +136,8 @@ d3.csv("california.csv")
         .on('zoom', handleZoom)
 
     drawTitle()
-    //drawMap()
+    drawLegend()
+    drawMap()
 
     drawFireDots()
 
@@ -149,15 +148,79 @@ d3.csv("california.csv")
     function drawTitle() {
         let title = svg.append("g")
         
+        let rootX = 125
+        let rootY = 85
+
         title.append("text")
         .attr("class", "titleText")
-        .attr("x", 125)
-        .attr("y", 85)
+        .attr("x", rootX)
+        .attr("y", rootY)
         .attr("text-align", "center")
         .attr("font-size", "30px")
         .text("California Fire map 1992-2020")
 
             
+    }
+    function drawLegend() {
+        let legend = svg.append("g")
+
+        let rootX = 700
+        let rootY = 200
+
+        legend.append("text")
+        .attr("x", rootX+35)
+        .attr("y", rootY+30)
+        .attr("text-align", "center")
+        .attr("font-size", "25px")
+        .text("More")
+
+        legend.append("text")
+        .attr("x", rootX+35)
+        .attr("y", rootY+210)
+        .attr("text-align", "center")
+        .attr("font-size", "25px")
+        .text("Less")
+
+        legend.append("rect")
+        .attr("x", rootX+50)
+        .attr("y", rootY+50)
+        .attr("width", 25)
+        .attr("height", 25)
+        .style("fill", "red")
+        .attr("stroke", "black")
+
+        legend.append("rect")
+        .attr("x", rootX+50)
+        .attr("y", rootY+75)
+        .attr("width", 25)
+        .attr("height", 25)
+        .style("fill", "rgba(255, 0, 0, 0.6)")
+        .attr("stroke", "black")
+
+        legend.append("rect")
+        .attr("x", rootX+50)
+        .attr("y", rootY+100)
+        .attr("width", 25)
+        .attr("height", 25)
+        .style("fill", "rgba(255, 0, 0, 0.4)")
+        .attr("stroke", "black")
+
+        legend.append("rect")
+        .attr("x", rootX+50)
+        .attr("y", rootY+125)
+        .attr("width", 25)
+        .attr("height", 25)
+        .style("fill", "rgba(255, 0, 0, 0.2)")
+        .attr("stroke", "black")
+
+        legend.append("rect")
+        .attr("x", rootX+50)
+        .attr("y", rootY+150)
+        .attr("width", 25)
+        .attr("height", 25)
+        .style("fill", "white")
+        .attr("stroke", "black")
+        
     }
     function drawMap() {
 
@@ -177,8 +240,6 @@ d3.csv("california.csv")
 
         d3.json("caliCounties.geojson").then (counties => {
             let selectedYearData = yearDict[selectedYear]
-    
-            console.log(counties)
     
             // Select Our Root coordinate to build map upon
             let county = counties.features.filter(county => county.properties.NAME === "Sacramento")[0]
@@ -209,6 +270,7 @@ d3.csv("california.csv")
                     let box = svg.append("g")
 
                     box.append("rect")
+                    .attr("class", "popupRect")
                     .attr("x", d3.event.x + 25)
                     .attr("y", d3.event.y - 50 - 25)
                     .attr("width", 250)
@@ -228,7 +290,7 @@ d3.csv("california.csv")
                         .attr('stroke-width', '2')
                     
                     svg.selectAll(".popupText").remove()
-                    svg.selectAll("rect").remove()
+                    svg.selectAll(".popupRect").remove()
                 })
                 .on("click", d => {
                 })
