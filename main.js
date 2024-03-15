@@ -108,7 +108,7 @@ d3.csv("california.csv")
 
        d3.select("svg").call(zoom.transform, d3.zoomIdentity.scale(1));
        drawMap()
-       drawFireDots()
+       //drawFireDots()
     });
     
     select.selectAll("option")
@@ -128,10 +128,18 @@ d3.csv("california.csv")
     }
 
 
-
     function handleZoom() {
         let selected = d3.selectAll("path, circle")
-
+        let circle = d3.selectAll("circle")
+        console.log(d3.event.transform.k, circle)
+        if (d3.event.transform.k > 1.5) {
+            if (circle.empty())
+                drawFireDots()
+        }
+            
+        else {
+            d3.selectAll("circle").remove()
+        }
         selected.attr("transform", d3.event.transform)
     }
 
@@ -144,7 +152,7 @@ d3.csv("california.csv")
     drawLegend()
     drawMap()
 
-    drawFireDots()
+    //drawFireDots()
 
 
     function drawTitle() {
@@ -273,6 +281,31 @@ d3.csv("california.csv")
 
     }
 
+    function drawEmptyCaliMap() {
+        d3.json("caliCounties.geojson").then (counties => {
+            let selectedYearData = yearDict[selectedYear]
+    
+            // Select Our Root coordinate to build map upon
+            let county = counties.features.filter(county => county.properties.NAME === "Sacramento")[0]
+
+            // Handle placement of points on SVG
+            let projection = d3.geoMercator().fitExtent([[heatmapLeft, heatmapTop], [heatmapWidth, heatmapHeight]], county)
+            let pathGen = d3.geoPath().projection(projection)
+
+            // Loop Each county
+            counties.features.forEach(county => {
+                let countyData = selectedYearData[county.properties.NAME]
+
+                var path = svg.append('path')
+                    .datum(county)
+                    .attr("d", pathGen)
+                    .attr('fill', 'none')
+                    .attr('stroke', 'steelblue')
+                    .attr('stroke-width', '2')
+            });
+    
+        });
+    } 
     function drawMap() {
 
         // GET MAX FIRE Count
