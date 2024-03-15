@@ -90,14 +90,47 @@ d3.csv("california.csv").then (rawData => {
         return
     });
 
+    let selectedYear = 1992
+    // Append Year Selector
+
     console.log(yearDict)
+    const possibleYears = Object.keys(yearDict)
+    console.log(possibleYears)
+    // Append Select
+    var select = d3.select("body")
+        .append("div")
+        .append("select");
+
+    select.on("change", d => {
+        selectedYear = d3.select("select").property("value");
+       // svg
+       d3.selectAll("path").remove()
+        update()
+    });
+    
+    select.selectAll("option")
+    .data(possibleYears)
+    .enter()
+    .append("option")
+    .attr("value", d => d)
+    .text(d => d)
+
+    // GET MAX FIRE Count
+    const yearDictValues = Object.entries(yearDict[selectedYear]) 
+    let maxFiresSelectedYear = 0
+
+    for (const [key, value] of yearDictValues) {
+        if (key !== "undefined")
+            maxFiresSelectedYear = Math.max(maxFiresSelectedYear, value.length)
+    }
 
     const myColor = d3.scaleLinear()
     .range(["white", "red"])
-    .domain([0, 500]) // Max Fire Count in dictionary
+    .domain([0, maxFiresSelectedYear]) // Max Fire Count in dictionary
 
+    let svg = d3.select("svg")
     d3.json("caliCounties.geojson").then (counties => {
-        let selectedYearData = yearDict["2000"] // ToDo Adjust when using html input box selection.
+        let selectedYearData = yearDict[selectedYear] // ToDo Adjust when using html input box selection.
 
         console.log(counties)
 
@@ -109,16 +142,15 @@ d3.csv("california.csv").then (rawData => {
         let projection = d3.geoMercator().fitExtent([[heatmapLeft, heatmapTop], [heatmapWidth, heatmapHeight]], county)
         let pathGen = d3.geoPath().projection(projection)
 
-        let svg = d3.select("svg")
+        
 
         // Loop Each county
         counties.features.forEach(county => {
             let countyData = selectedYearData[county.properties.NAME]
-            if ( countyData != null) {
-                console.log(countyData.length)
-            } else 
-                console.log("no fires this year at " + county.properties.NAME)
-            console.log(county)
+            // if ( countyData != null) {
+            //     console.log(countyData.length)
+            // } else 
+            //     console.log("no fires this year at " + county.properties.NAME)
 
             svg.append('path')
                 .datum(county)
@@ -131,6 +163,56 @@ d3.csv("california.csv").then (rawData => {
 
     })
 
+    function update() {
+
+        // GET MAX FIRE Count
+        const yearDictValues = Object.entries(yearDict[selectedYear]) 
+        let maxFiresSelectedYear = 0
+    
+        for (const [key, value] of yearDictValues) {
+            if (key !== "undefined")
+                maxFiresSelectedYear = Math.max(maxFiresSelectedYear, value.length)
+        }
+    
+        const myColor = d3.scaleLinear()
+        .range(["white", "red"])
+        .domain([0, maxFiresSelectedYear]) // Max Fire Count in dictionary
+    
+        let svg = d3.select("svg")
+        d3.json("caliCounties.geojson").then (counties => {
+            let selectedYearData = yearDict[selectedYear] // ToDo Adjust when using html input box selection.
+    
+            console.log(counties)
+    
+            // Select Our Root coordinate to build map upon
+            let county = counties.features.filter(county => county.properties.NAME === "Sacramento")[0]
+            console.log(county)
+    
+            // Handle placement of points on SVG
+            let projection = d3.geoMercator().fitExtent([[heatmapLeft, heatmapTop], [heatmapWidth, heatmapHeight]], county)
+            let pathGen = d3.geoPath().projection(projection)
+    
+            
+    
+            // Loop Each county
+            counties.features.forEach(county => {
+                let countyData = selectedYearData[county.properties.NAME]
+                // if ( countyData != null) {
+                //     console.log(countyData.length)
+                // } else 
+                //     console.log("no fires this year at " + county.properties.NAME)
+    
+                svg.append('path')
+                    .datum(county)
+                    .attr("d", pathGen)
+                    .attr('fill', countyData != null ? myColor(countyData.length) : "none")
+                    .attr('stroke', 'steelblue')
+                    .attr('stroke-width', '2')
+    
+            })
+    
+        })
+    }
 
 }).catch(function(error){
     console.log(error);
