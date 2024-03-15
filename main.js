@@ -98,11 +98,10 @@ d3.csv("california.csv")
 
     const possibleYears = Object.keys(yearDict)
     // Append Select
-    var area = d3.append("g")
-        
-
-    let select = area.append("select")
+    var select = d3.select("select")
         .style("font-size", "30px")
+
+
     select.on("change", d => {
         selectedYear = d3.select("select").property("value");
        // svg
@@ -142,6 +141,7 @@ d3.csv("california.csv")
     //drawMap()
 
     drawFireDots()
+
     function zoomToCounty() {
 
     }
@@ -151,11 +151,11 @@ d3.csv("california.csv")
         
         title.append("text")
         .attr("class", "titleText")
-        .attr("x", 150)
-        .attr("y", 50)
+        .attr("x", 125)
+        .attr("y", 85)
         .attr("text-align", "center")
         .attr("font-size", "30px")
-        .text("California Fire Map 1992-2020")
+        .text("California Fire map 1992-2020")
 
             
     }
@@ -250,7 +250,6 @@ d3.csv("california.csv")
         }
         
         const fireData = allDataForYear.filter(d => d.LATITUDE && d.LONGITUDE && d.NWCG_CAUSE_CLASSIFICATION);
-        console.log(fireData)
 
         d3.json("caliCounties.geojson").then (counties => {
             let county = counties.features.filter(county => county.properties.NAME === "Sacramento")[0]
@@ -262,15 +261,15 @@ d3.csv("california.csv")
             svg.selectAll("circle")
                 .data(fireData)
                 .enter()
-                .append("circle")
-                .attr("cx", d => projection([parseFloat(d.LONGITUDE), parseFloat(d.LATITUDE)])[0])
-                .attr("cy", d => projection([parseFloat(d.LONGITUDE), parseFloat(d.LATITUDE)])[1])
-                .attr("r", 0.5)
-                .attr("fill", d => {
-                    if (d.NWCG_CAUSE_CLASSIFICATION === "Human") return "red";
-                    else if (d.NWCG_CAUSE_CLASSIFICATION === "Natural") return "blue";
-                    else return "green";
-                });
+                    .append("circle")
+                    .attr("cx", d => projection([parseFloat(d.LONGITUDE), parseFloat(d.LATITUDE)])[0])
+                    .attr("cy", d => projection([parseFloat(d.LONGITUDE), parseFloat(d.LATITUDE)])[1])
+                    .attr("r", 0.5)
+                    .attr("fill", d => {
+                        if (d.NWCG_CAUSE_CLASSIFICATION === "Human") return "red";
+                        else if (d.NWCG_CAUSE_CLASSIFICATION === "Natural") return "green";
+                        else return "gray";
+                    });
         });
     }
 
