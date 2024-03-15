@@ -6,3 +6,5 @@ https://www.kaggle.com/datasets/behroozsohrabi/us-wildfire-records-6th-edition?s
 ## Additional Data
 GeoJSON data for California Map of their counties
 https://cartographyvectors.com/map/780-california-counties
+
+There are no further actions needed. Just run a live view of the project.
