@@ -8,6 +8,10 @@ let heatmapLeft = 200
 let heatmapWidth = 50 + heatmapLeft
 let heatmapHeight = 100 + heatmapTop
 
+const lineChartMargin = { top: 50, right: 50, bottom: 50, left: 80 };
+const lineChartWidth = width * 0.5 - lineChartMargin.left - lineChartMargin.right;
+const lineChartHeight = height - lineChartMargin.top - lineChartMargin.bottom;
+
 const codeToCountyMap = {
     "06001": "Alameda", 
     "06031": "Kings",
@@ -73,6 +77,8 @@ const codeToCountyMap = {
 d3.csv("california.csv")
   .then((rawData) => {
     let yearDict = {};
+    let causeCountbyYear = {};
+    let monthlyFireCounts = {};
 
     // Parse Data into Dict of years and Separated by County Name
     rawData.forEach((element) => {
@@ -87,7 +93,39 @@ d3.csv("california.csv")
       } else {
         yearDict[element.FIRE_YEAR] = {};
       }
+      
       return;
+    });
+
+    // Parse Data for Cause of Fire by Year and Months
+    rawData.forEach((element) => {
+        const year = element.FIRE_YEAR;
+        const cause = element.NWCG_CAUSE_CLASSIFICATION;
+        const date = new Date(element.DISCOVERY_DATE);
+        const month = date.getMonth() + 1; // Add 1 to month (0-indexed)
+        const yearMonthKey = `${year}-${month}`;
+    
+        // Update causeCountbyYear
+        if (!causeCountbyYear[year]) {
+            causeCountbyYear[year] = { "Natural": 0, "Human": 0 };
+        }
+        if (cause === "Natural") {
+            causeCountbyYear[year]["Natural"] ++;
+        } else if (cause === "Human") {
+            causeCountbyYear[year]["Human"]++;
+        }
+    
+        // Update monthlyFireCounts
+        if (!monthlyFireCounts[yearMonthKey]) {
+            monthlyFireCounts[yearMonthKey] = { total: 0, "Natural": 0, "Human": 0 };
+        }
+        monthlyFireCounts[yearMonthKey].total++;
+        if (cause === "Natural") {
+            monthlyFireCounts[yearMonthKey]["Natural"]++;
+        } else if (cause === "Human") {
+            monthlyFireCounts[yearMonthKey]["Human"]++;
+        }
+
     });
 
     //Base Selected Year
@@ -131,18 +169,25 @@ d3.csv("california.csv")
     function handleZoom() {
         let selected = d3.selectAll("path, circle")
         let circle = d3.selectAll("circle")
-
+        console.log(d3.event.transform.k, circle)
         if (d3.event.transform.k > 1.5) {
             if (circle.empty())
                 drawFireDots()
         }
+            
         else {
             d3.selectAll("circle").remove()
         }
         selected.attr("transform", d3.event.transform)
     }
 
-    let zoom = d3.zoom().on("zoom", handleZoom)
+
+    let zoom = d3.zoom()
+    .filter(() => {
+        const target = d3.event.target;
+        return !target.closest("#line-chart-container, #line-chart-svg"); // Ignore zoom events on the line chart container and SVG
+    })
+    .on("zoom", handleZoom);
     // Zooming
     let svg = d3.select("svg")
         .call(zoom)
@@ -150,6 +195,7 @@ d3.csv("california.csv")
     drawTitle()
     drawLegend()
     drawMap()
+    drawLineChart()
 
     //drawFireDots()
 
@@ -266,7 +312,7 @@ d3.csv("california.csv")
         .attr("y", rootY+40 + dotOffsetY)
         .attr("width", 25)
         .attr("height", 25)
-        .style("fill", "red")
+        .style("fill", "Blue")
         .attr("stroke", "black")
 
         legend.append("rect")
@@ -274,7 +320,7 @@ d3.csv("california.csv")
         .attr("y", rootY+10 + dotOffsetY)
         .attr("width", 25)
         .attr("height", 25)
-        .style("fill", "green")
+        .style("fill", "Orange")
         .attr("stroke", "black")
 
 
@@ -331,6 +377,7 @@ d3.csv("california.csv")
             // Handle placement of points on SVG
             let projection = d3.geoMercator().fitExtent([[heatmapLeft, heatmapTop], [heatmapWidth, heatmapHeight]], county)
             let pathGen = d3.geoPath().projection(projection)
+            
 
             // Loop Each county
             counties.features.forEach(county => {
@@ -408,11 +455,152 @@ d3.csv("california.csv")
                     .attr("cy", d => projection([parseFloat(d.LONGITUDE), parseFloat(d.LATITUDE)])[1])
                     .attr("r", 0.5)
                     .attr("fill", d => {
-                        if (d.NWCG_CAUSE_CLASSIFICATION === "Human") return "red";
-                        else if (d.NWCG_CAUSE_CLASSIFICATION === "Natural") return "green";
-                        else return "gray";
+                        if (d.NWCG_CAUSE_CLASSIFICATION === "Human") return "Orange";
+                        else if (d.NWCG_CAUSE_CLASSIFICATION === "Natural") return "Blue";
+                        else return "Gray";
                     });
         });
+    }
+
+    function drawLineChart() {
+        const lineChartContainer = d3.select("body")
+        .append("div")
+        .attr("id", "line-chart-container")
+        .style("position", "absolute") 
+        .style("top", "0px")
+        .style("left", `${width * 0.5}px`)
+
+        const svgLineChart= lineChartContainer
+        .append("svg")
+        .attr("id", "line-chart-svg") // unique id
+        .attr("width", lineChartWidth * 2 + lineChartMargin.left + lineChartMargin.right)
+        .attr("height", lineChartHeight + lineChartMargin.top + lineChartMargin.bottom)
+        .append("g")
+        .attr("transform", `translate(${lineChartMargin.left}, ${lineChartMargin.top})`);
+
+
+    // x and y scales
+    const xScale = d3.scaleBand()
+        .range([0, lineChartWidth])
+        .domain(Object.keys(causeCountbyYear).map(year => parseInt(year)))
+        .padding(0.1);
+
+    const yScale = d3.scaleLinear()
+        .range([lineChartHeight, 0])
+        .domain([0, d3.max(Object.values(causeCountbyYear), d => d.Human + d.Natural)]);
+
+    // x and y axis generators
+    const xAxis = d3.axisBottom(xScale).tickFormat(d3.format("d"));
+    const yAxis = d3.axisLeft(yScale);
+
+    // draw x and y axis
+    svgLineChart.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0, ${lineChartHeight})`)
+        .call(xAxis);
+
+    svgLineChart.append("g")
+        .attr("class", "y-axis")
+        .call(yAxis);
+
+    // drawing lines for chart
+    const lineGeneratorHuman = d3.line()
+        .x((d, i) => xScale(parseInt(Object.keys(causeCountbyYear)[i])) + xScale.bandwidth() / 2)
+        .y(d => yScale(d.Human));
+
+    const lineGeneratorNatural = d3.line()
+        .x((d, i) => xScale(parseInt(Object.keys(causeCountbyYear)[i])) + xScale.bandwidth() / 2)
+        .y(d => yScale(d.Natural));
+
+     // horizontal grid lines
+    svgLineChart.selectAll(".grid-line")
+        .data(yScale.ticks())
+        .enter().append("line")
+        .attr("class", "grid-line")
+        .attr("x1", 0)
+        .attr("x2", lineChartWidth)
+        .attr("y1", d => yScale(d))
+        .attr("y2", d => yScale(d))
+        .style("stroke", "lightgray")
+        .style("stroke-opacity", 0.7);
+    
+
+    // line for human-caused fires
+    svgLineChart.append("path")
+        .datum(Object.values(causeCountbyYear))
+        .attr("fill", "none")
+        .attr("stroke", "Orange") // color for human-caused fires
+        .attr("stroke-width", 2)
+        .attr("d", lineGeneratorHuman);
+
+    //  line for natural causes
+    svgLineChart.append("path")
+        .datum(Object.values(causeCountbyYear))
+        .attr("fill", "none")
+        .attr("stroke", "blue") //color for natural causes
+        .attr("stroke-width", 2)
+        .attr("d", lineGeneratorNatural);
+    // labels
+    svgLineChart.append("text") // x axis label
+        .attr("transform", `translate(${lineChartWidth / 2}, ${lineChartHeight + 40})`)
+        .style("text-anchor", "middle")
+        .text("Year");
+
+    svgLineChart.append("text") // y axis label
+        .attr("transform", "rotate(-90)")
+        .attr("x", -lineChartHeight / 2)
+        .attr("y", -40)
+        .style("text-anchor", "middle")
+        .text("Number of Fires");
+    
+    svgLineChart.append("text") // chart title
+        .attr("x", lineChartWidth / 2)
+        .attr("y", -10)
+        .style("text-anchor", "middle")
+        .style("font-size", "24px")
+        .text("Trends of California Fires by Cause")
+
+
+    const legendRectSize = 20; // Size of the colored rectangles in the legend
+    const legendSpacing = 5; // Spacing between the colored rectangles and the labels in the legend
+        
+         
+    // Define legend data
+    const legendData = [
+        { label: "Human", color: "Orange" },
+        { label: "Natural", color: "Blue" }
+    ];
+
+    // Append legend group
+    const legend = svgLineChart.append("g")
+        .attr("class", "legend")
+        .attr("transform", `translate(${lineChartWidth + 20}, ${lineChartHeight / 2})`);
+
+    // Append legend items
+    const legendItems = legend.selectAll(".legend-item")
+        .data(legendData)
+        .enter().append("g")
+        .attr("class", "legend-item")
+        .attr("transform", (d, i) => `translate(0, ${i * 30})`);
+
+    // Append legend lines
+    legendItems.append("line")
+        .attr("x1", 0)
+        .attr("x2", 30)
+        .attr("y1", 10)
+        .attr("y2", 10)
+        .attr("stroke", d => d.color)
+        .attr("stroke-width", 2);
+
+    // Append legend labels
+    legendItems.append("text")
+        .attr("x", d => legendRectSize + legendSpacing + 5) // Adjust the x-position here
+        .attr("y", legendRectSize / 2)
+        .text(d => d.label)
+        .attr("fill", "black")
+        .style("font-size", "16px")
+        .attr("alignment-baseline", "middle");  
+
     }
 
 }).catch(function(error){
