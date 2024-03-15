@@ -4,7 +4,7 @@ const height = 1080 * .7;
 
 let heatmapMargin = {top: 10, right: 10, bottom: 10, left: 10}
 let heatmapTop = 350
-let heatmapLeft = 400
+let heatmapLeft = 200
 let heatmapWidth = 50 + heatmapLeft
 let heatmapHeight = 100 + heatmapTop
 
@@ -166,19 +166,26 @@ d3.csv("california.csv")
 
         let rootX = 700
         let rootY = 200
-
+        let dotOffsetY = 50
         legend.append("text")
-        .attr("x", rootX+35)
-        .attr("y", rootY+30)
+        .attr("x", rootX+5)
+        .attr("y", rootY)
         .attr("text-align", "center")
         .attr("font-size", "25px")
+        .text("Heatmap Key")
+
+        legend.append("text")
+        .attr("x", rootX+40)
+        .attr("y", rootY+30)
+        .attr("text-align", "center")
+        .attr("font-size", "20px")
         .text("More")
 
         legend.append("text")
-        .attr("x", rootX+35)
+        .attr("x", rootX+40)
         .attr("y", rootY+210)
         .attr("text-align", "center")
-        .attr("font-size", "25px")
+        .attr("font-size", "20px")
         .text("Less")
 
         legend.append("rect")
@@ -221,6 +228,46 @@ d3.csv("california.csv")
         .style("fill", "white")
         .attr("stroke", "black")
         
+
+        // Dot
+        legend.append("text")
+        .attr("x", rootX+150)
+        .attr("y", rootY + dotOffsetY)
+        .attr("text-align", "center")
+        .attr("font-size", "25px")
+        .text("Fire Causes")
+
+        legend.append("text")
+        .attr("x", rootX+210)
+        .attr("y", rootY+30 + dotOffsetY)
+        .attr("text-align", "center")
+        .attr("font-size", "20px")
+        .text("Human")
+
+        legend.append("text")
+        .attr("x", rootX+210)
+        .attr("y", rootY+60 + dotOffsetY)
+        .attr("text-align", "center")
+        .attr("font-size", "20px")
+        .text("Natural")
+
+        legend.append("rect")
+        .attr("x", rootX+170)
+        .attr("y", rootY+40 + dotOffsetY)
+        .attr("width", 25)
+        .attr("height", 25)
+        .style("fill", "red")
+        .attr("stroke", "black")
+
+        legend.append("rect")
+        .attr("x", rootX+170)
+        .attr("y", rootY+10 + dotOffsetY)
+        .attr("width", 25)
+        .attr("height", 25)
+        .style("fill", "green")
+        .attr("stroke", "black")
+
+
     }
     function drawMap() {
 
