@@ -457,7 +457,7 @@ d3.csv("california.csv")
                     .attr("fill", d => {
                         if (d.NWCG_CAUSE_CLASSIFICATION === "Human") return "Orange";
                         else if (d.NWCG_CAUSE_CLASSIFICATION === "Natural") return "Blue";
-                        else return "Gray";
+                        else return "None";
                     });
         });
     }
