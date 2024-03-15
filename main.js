@@ -156,6 +156,14 @@ d3.csv("california.csv")
     .attr("value", d => d)
     .text(d => d)
 
+    var resetButton = d3.select("body") // reset to default view to see linechart
+    .append("button")
+    .attr("id", "reset-button")
+    .text("Reset View")
+    .on("click", function() {
+        d3.select("svg").transition().duration(500).call(zoom.transform, d3.zoomIdentity);
+    });
+
     // GET MAX FIRE Count
     const yearDictValues = Object.entries(yearDict[selectedYear]) 
     let maxFiresSelectedYear = 0
@@ -173,12 +181,16 @@ d3.csv("california.csv")
         if (d3.event.transform.k > 1.5) {
             if (circle.empty())
                 drawFireDots()
+            d3.select("#line-chart-container").style("display", "none"); // fix zooming issue without giving unique id to draw map and draw fire circles
         }
             
         else {
             d3.selectAll("circle").remove()
+            drawLineChart();
         }
         selected.attr("transform", d3.event.transform)
+       
+       
     }
 
 
@@ -323,7 +335,6 @@ d3.csv("california.csv")
         .style("fill", "Orange")
         .attr("stroke", "black")
 
-
     }
 
     function drawEmptyCaliMap() {
@@ -463,6 +474,9 @@ d3.csv("california.csv")
     }
 
     function drawLineChart() {
+
+        d3.select("#line-chart-container").remove();
+        
         const lineChartContainer = d3.select("body")
         .append("div")
         .attr("id", "line-chart-container")
