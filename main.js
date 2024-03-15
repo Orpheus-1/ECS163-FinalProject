@@ -100,11 +100,13 @@ d3.csv("california.csv")
 
 
     select.on("change", d => {
-        selectedYear = d3.select("select").property("value");
+       selectedYear = d3.select("select").property("value");
        // svg
+       d3.select()
        d3.selectAll("path").remove()
        d3.selectAll("circle").remove()
 
+       d3.select("svg").call(zoom.transform, d3.zoomIdentity.scale(1));
        drawMap()
        drawFireDots()
     });
@@ -125,15 +127,18 @@ d3.csv("california.csv")
             maxFiresSelectedYear = Math.max(maxFiresSelectedYear, value.length)
     }
 
-    function handleZoom(e) {
-        console.log(e)
 
+
+    function handleZoom() {
+        let selected = d3.selectAll("path, circle")
+
+        selected.attr("transform", d3.event.transform)
     }
 
-    let svg = d3.select("svg")
+    let zoom = d3.zoom().on("zoom", handleZoom)
     // Zooming
-    let zoom = d3.zoom()
-        .on('zoom', handleZoom)
+    let svg = d3.select("svg")
+        .call(zoom)
 
     drawTitle()
     drawLegend()
@@ -141,9 +146,6 @@ d3.csv("california.csv")
 
     drawFireDots()
 
-    function zoomToCounty() {
-
-    }
 
     function drawTitle() {
         let title = svg.append("g")
@@ -157,14 +159,15 @@ d3.csv("california.csv")
         .attr("y", rootY)
         .attr("text-align", "center")
         .attr("font-size", "30px")
-        .text("California Fire map 1992-2020")
+        .text("California Fire Map 1992-2020")
 
             
     }
+
     function drawLegend() {
         let legend = svg.append("g")
 
-        let rootX = 700
+        let rootX = 600
         let rootY = 200
         let dotOffsetY = 50
         legend.append("text")
@@ -269,6 +272,7 @@ d3.csv("california.csv")
 
 
     }
+
     function drawMap() {
 
         // GET MAX FIRE Count
@@ -290,7 +294,7 @@ d3.csv("california.csv")
     
             // Select Our Root coordinate to build map upon
             let county = counties.features.filter(county => county.properties.NAME === "Sacramento")[0]
-            console.log(county)   
+            //console.log(county)   
     
             // Handle placement of points on SVG
             let projection = d3.geoMercator().fitExtent([[heatmapLeft, heatmapTop], [heatmapWidth, heatmapHeight]], county)
@@ -307,10 +311,7 @@ d3.csv("california.csv")
                     .attr('stroke', 'steelblue')
                     .attr('stroke-width', '2')
                 
-
-
                 path.on("mouseover", (d) => {
-                    console.log(d3.event, d)
                     path.attr('stroke', 'black')
                         .attr('stroke-width', '3')
 
