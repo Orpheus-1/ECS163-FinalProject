@@ -1,10 +1,9 @@
-
 // changed to fit the screen of a standard 1920x1080 monitor
 const width = 1920 * .9;
 const height = 1080 * .7; 
 
 let heatmapMargin = {top: 10, right: 10, bottom: 10, left: 10}
-let heatmapTop = 250
+let heatmapTop = 350
 let heatmapLeft = 400
 let heatmapWidth = 50 + heatmapLeft
 let heatmapHeight = 100 + heatmapTop
@@ -71,23 +70,23 @@ const codeToCountyMap = {
 }   
 
 // read the raw data from csv to plot
-d3.csv("california.csv").then (rawData => {
-    let yearDict = {}
-    console.log(rawData)
-    rawData.forEach(element => {
-        if (element.FIRE_YEAR in yearDict) {
-            let countyName= codeToCountyMap[element.FIPS_CODE]
+d3.csv("california.csv")
+  .then((rawData) => {
+    let yearDict = {};
+    console.log(rawData);
+    rawData.forEach((element) => {
+      if (element.FIRE_YEAR in yearDict) {
+        let countyName = codeToCountyMap[element.FIPS_CODE];
 
-            if (countyName in yearDict[element.FIRE_YEAR]) {
-                yearDict[element.FIRE_YEAR][countyName].push(element)
-            } else {
-                yearDict[element.FIRE_YEAR][countyName] = []
-            }
-
+        if (countyName in yearDict[element.FIRE_YEAR]) {
+          yearDict[element.FIRE_YEAR][countyName].push(element);
         } else {
-            yearDict[element.FIRE_YEAR] = {}
+          yearDict[element.FIRE_YEAR][countyName] = [];
         }
-        return
+      } else {
+        yearDict[element.FIRE_YEAR] = {};
+      }
+      return;
     });
 
     let selectedYear = 1992
@@ -99,15 +98,18 @@ d3.csv("california.csv").then (rawData => {
 
     const possibleYears = Object.keys(yearDict)
     // Append Select
-    var select = d3.select("select")
+    var area = d3.append("g")
+        
+
+    let select = area.append("select")
         .style("font-size", "30px")
-
-
     select.on("change", d => {
         selectedYear = d3.select("select").property("value");
        // svg
        d3.selectAll("path").remove()
-       drawMap()
+       d3.selectAll("circle").remove()
+       //drawMap()
+       drawFireDots()
     });
     
     select.selectAll("option")
@@ -131,14 +133,31 @@ d3.csv("california.csv").then (rawData => {
 
     }
 
+    let svg = d3.select("svg")
     // Zooming
     let zoom = d3.zoom()
         .on('zoom', handleZoom)
 
-    drawMap()
+    drawTitle()
+    //drawMap()
 
+    drawFireDots()
     function zoomToCounty() {
 
+    }
+
+    function drawTitle() {
+        let title = svg.append("g")
+        
+        title.append("text")
+        .attr("class", "titleText")
+        .attr("x", 150)
+        .attr("y", 50)
+        .attr("text-align", "center")
+        .attr("font-size", "30px")
+        .text("California Fire Map 1992-2020")
+
+            
     }
     function drawMap() {
 
@@ -154,9 +173,8 @@ d3.csv("california.csv").then (rawData => {
         const myColor = d3.scaleLinear()
         .range(["white", "red"])
         .domain([0, maxFiresSelectedYear]) // Max Fire Count in dictionary
-    
-        let svg = d3.select("svg")
         
+
         d3.json("caliCounties.geojson").then (counties => {
             let selectedYearData = yearDict[selectedYear]
     
@@ -182,6 +200,7 @@ d3.csv("california.csv").then (rawData => {
                     .attr('stroke-width', '2')
                 
 
+
                 path.on("mouseover", (d) => {
                     console.log(d3.event, d)
                     path.attr('stroke', 'black')
@@ -203,8 +222,6 @@ d3.csv("california.csv").then (rawData => {
                     .attr("text-align", "center")
                     .attr("font-size", "30px")
                     .text(d.properties.NAME)
-                    
-                    
                 })
                 .on("mouseout", d => {
                     path.attr('stroke', 'steelblue')
@@ -220,9 +237,44 @@ d3.csv("california.csv").then (rawData => {
         });
     }
 
+
+    function drawFireDots() {
+        let selectedYearData = yearDict[selectedYear]
+        
+        const yearDictValues = Object.entries(selectedYearData) 
+        let allDataForYear = []
+
+        // Combine all data for year
+        for (const [key, value] of yearDictValues) {
+            allDataForYear = allDataForYear.concat(value)
+        }
+        
+        const fireData = allDataForYear.filter(d => d.LATITUDE && d.LONGITUDE && d.NWCG_CAUSE_CLASSIFICATION);
+        console.log(fireData)
+
+        d3.json("caliCounties.geojson").then (counties => {
+            let county = counties.features.filter(county => county.properties.NAME === "Sacramento")[0]
+
+            // Handle placement of points on SVG
+            let projection = d3.geoMercator().fitExtent([[heatmapLeft, heatmapTop], [heatmapWidth, heatmapHeight]], county)
+
+            // Draw fire points on the heatmap
+            svg.selectAll("circle")
+                .data(fireData)
+                .enter()
+                .append("circle")
+                .attr("cx", d => projection([parseFloat(d.LONGITUDE), parseFloat(d.LATITUDE)])[0])
+                .attr("cy", d => projection([parseFloat(d.LONGITUDE), parseFloat(d.LATITUDE)])[1])
+                .attr("r", 0.5)
+                .attr("fill", d => {
+                    if (d.NWCG_CAUSE_CLASSIFICATION === "Human") return "red";
+                    else if (d.NWCG_CAUSE_CLASSIFICATION === "Natural") return "blue";
+                    else return "green";
+                });
+        });
+    }
+
 }).catch(function(error){
     console.log(error);
-});
-
-
+  });
 
