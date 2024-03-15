@@ -131,12 +131,11 @@ d3.csv("california.csv")
     function handleZoom() {
         let selected = d3.selectAll("path, circle")
         let circle = d3.selectAll("circle")
-        console.log(d3.event.transform.k, circle)
+
         if (d3.event.transform.k > 1.5) {
             if (circle.empty())
                 drawFireDots()
         }
-            
         else {
             d3.selectAll("circle").remove()
         }
