@@ -204,6 +204,7 @@ d3.csv("california.csv").then (rawData => {
                     .attr("font-size", "30px")
                     .text(d.properties.NAME)
                     
+                    
                 })
                 .on("mouseout", d => {
                     path.attr('stroke', 'steelblue')
