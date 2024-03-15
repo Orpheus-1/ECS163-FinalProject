@@ -4,10 +4,10 @@ const width = 1920 * .9;
 const height = 1080 * .7; 
 
 let heatmapMargin = {top: 10, right: 10, bottom: 10, left: 10}
-let heatmapTop = 400
+let heatmapTop = 250
 let heatmapLeft = 400
 let heatmapWidth = 50 + heatmapLeft
-let heatmapHeight = 50 + heatmapTop
+let heatmapHeight = 100 + heatmapTop
 
 const codeToCountyMap = {
     "06001": "Alameda", 
@@ -94,18 +94,18 @@ d3.csv("california.csv").then (rawData => {
     // Append Year Selector
 
     console.log(yearDict)
+
     const possibleYears = Object.keys(yearDict)
-    console.log(possibleYears)
     // Append Select
-    var select = d3.select("body")
-        .append("div")
-        .append("select");
+    var select = d3.select("select")
+        .style("font-size", "30px")
+
 
     select.on("change", d => {
         selectedYear = d3.select("select").property("value");
        // svg
        d3.selectAll("path").remove()
-        update()
+       drawMap()
     });
     
     select.selectAll("option")
@@ -124,46 +124,9 @@ d3.csv("california.csv").then (rawData => {
             maxFiresSelectedYear = Math.max(maxFiresSelectedYear, value.length)
     }
 
-    const myColor = d3.scaleLinear()
-    .range(["white", "red"])
-    .domain([0, maxFiresSelectedYear]) // Max Fire Count in dictionary
+    drawMap()
 
-    let svg = d3.select("svg")
-    d3.json("caliCounties.geojson").then (counties => {
-        let selectedYearData = yearDict[selectedYear] // ToDo Adjust when using html input box selection.
-
-        console.log(counties)
-
-        // Select Our Root coordinate to build map upon
-        let county = counties.features.filter(county => county.properties.NAME === "Sacramento")[0]
-        console.log(county)
-
-        // Handle placement of points on SVG
-        let projection = d3.geoMercator().fitExtent([[heatmapLeft, heatmapTop], [heatmapWidth, heatmapHeight]], county)
-        let pathGen = d3.geoPath().projection(projection)
-
-        
-
-        // Loop Each county
-        counties.features.forEach(county => {
-            let countyData = selectedYearData[county.properties.NAME]
-            // if ( countyData != null) {
-            //     console.log(countyData.length)
-            // } else 
-            //     console.log("no fires this year at " + county.properties.NAME)
-
-            svg.append('path')
-                .datum(county)
-                .attr("d", pathGen)
-                .attr('fill', countyData != null ? myColor(countyData.length) : "none")
-                .attr('stroke', 'steelblue')
-                .attr('stroke-width', '2')
-
-        })
-
-    })
-
-    function update() {
+    function drawMap() {
 
         // GET MAX FIRE Count
         const yearDictValues = Object.entries(yearDict[selectedYear]) 
@@ -197,21 +160,28 @@ d3.csv("california.csv").then (rawData => {
             // Loop Each county
             counties.features.forEach(county => {
                 let countyData = selectedYearData[county.properties.NAME]
-                // if ( countyData != null) {
-                //     console.log(countyData.length)
-                // } else 
-                //     console.log("no fires this year at " + county.properties.NAME)
-    
-                svg.append('path')
+
+                var path = svg.append('path')
                     .datum(county)
                     .attr("d", pathGen)
-                    .attr('fill', countyData != null ? myColor(countyData.length) : "none")
+                    .attr('fill', countyData != null ? myColor(countyData.length) : "white")
                     .attr('stroke', 'steelblue')
                     .attr('stroke-width', '2')
+                
+
+                path.on("mouseover", d => {
+                    console.log(d)
+                    path.attr('stroke', 'black')
+                        .attr('stroke-width', '3')
+                    
+                })
+                .on("mouseout", d => {
+                    path.attr('stroke', 'steelblue')
+                        .attr('stroke-width', '2')
+                });
+            });
     
-            })
-    
-        })
+        });
     }
 
 }).catch(function(error){
